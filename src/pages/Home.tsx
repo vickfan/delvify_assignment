@@ -1,60 +1,94 @@
-import MessageListItem from '../components/MessageListItem';
-import { useState } from 'react';
-import { Message, getMessages } from '../data/messages';
+import MessageListItem from "../components/MessageListItem";
+import { useCallback, useEffect, useState } from "react";
+import { Message, getMessages } from "../data/messages";
 import {
-  IonContent,
-  IonHeader,
-  IonList,
-  IonPage,
-  IonRefresher,
-  IonRefresherContent,
-  IonTitle,
-  IonToolbar,
-  useIonViewWillEnter
-} from '@ionic/react';
-import './Home.css';
+    IonButton,
+    IonButtons,
+    IonCheckbox,
+    IonContent,
+    IonFab,
+    IonFabButton,
+    IonHeader,
+    IonIcon,
+    IonItem,
+    IonLabel,
+    IonList,
+    IonPage,
+    IonRefresher,
+    IonRefresherContent,
+    IonTitle,
+    IonToolbar,
+    useIonViewWillEnter,
+} from "@ionic/react";
+import "./Home.css";
+import { get } from "../helpers/api";
+import { List } from "../helpers/models";
+import { trashOutline } from "ionicons/icons";
 
 const Home: React.FC = () => {
+    const [lists, setLists] = useState<List[]>();
+    const [editing, setEditing] = useState<boolean>(false);
 
-  const [messages, setMessages] = useState<Message[]>([]);
+    const getLists = useCallback(
+        async function () {
+            let activeLists: List[] = await get("/lists");
+            setLists(activeLists);
+        },
+        [setLists]
+    );
 
-  useIonViewWillEnter(() => {
-    const msgs = getMessages();
-    setMessages(msgs);
-  });
+    const toggleEditMode = () => {
+        editing ? setEditing(false) : setEditing(true);
+    };
 
-  const refresh = (e: CustomEvent) => {
-    setTimeout(() => {
-      e.detail.complete();
-    }, 3000);
-  };
+    useEffect(() => {
+        getLists();
+    }, [getLists]);
 
-  return (
-    <IonPage id="home-page">
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Inbox</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent fullscreen>
-        <IonRefresher slot="fixed" onIonRefresh={refresh}>
-          <IonRefresherContent></IonRefresherContent>
-        </IonRefresher>
+    return (
+        <IonPage id="home-page">
+            <IonHeader>
+                <IonToolbar>
+                    <IonTitle>To Do List</IonTitle>
+                    <IonButtons slot="end">
+                        <IonButton onClick={() => toggleEditMode()}>
+                            {editing ? "done" : "edit"}
+                        </IonButton>
+                    </IonButtons>
+                </IonToolbar>
+            </IonHeader>
+            <IonContent fullscreen>
+                {/* <IonRefresher slot="fixed" onIonRefresh={refresh}>
+                    <IonRefresherContent></IonRefresherContent>
+                </IonRefresher> */}
 
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">
-              Inbox
-            </IonTitle>
-          </IonToolbar>
-        </IonHeader>
-
-        <IonList>
-          {messages.map(m => <MessageListItem key={m.id} message={m} />)}
-        </IonList>
-      </IonContent>
-    </IonPage>
-  );
+                <IonList>
+                    {lists?.map((list) => {
+                        return (
+                            <>
+                                <IonItem
+                                    routerLink={"/tasks/" + list.id}
+                                    key={list.id}
+                                >
+                                    {editing ? (
+                                        <IonCheckbox slot="start"></IonCheckbox>
+                                    ) : null}
+                                    <IonLabel>{list.name}</IonLabel>
+                                </IonItem>
+                            </>
+                        );
+                    })}
+                </IonList>
+                {editing ? (
+                    <IonFab horizontal="center" vertical="bottom">
+                        <IonFabButton color="danger">
+                            <IonIcon icon={trashOutline} />
+                        </IonFabButton>
+                    </IonFab>
+                ) : null}
+            </IonContent>
+        </IonPage>
+    );
 };
 
 export default Home;

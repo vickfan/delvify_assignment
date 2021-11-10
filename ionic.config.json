@@ -1,0 +1,7 @@
+{
+  "name": "delvify_assignment",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}

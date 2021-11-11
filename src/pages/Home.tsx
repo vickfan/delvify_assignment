@@ -4,12 +4,14 @@ import { Message, getMessages } from "../data/messages";
 import {
     IonButton,
     IonButtons,
+    IonCard,
     IonCheckbox,
     IonContent,
     IonFab,
     IonFabButton,
     IonHeader,
     IonIcon,
+    IonInput,
     IonItem,
     IonLabel,
     IonList,
@@ -18,16 +20,24 @@ import {
     IonRefresherContent,
     IonTitle,
     IonToolbar,
+    useIonModal,
     useIonViewWillEnter,
 } from "@ionic/react";
 import "./Home.css";
-import { get } from "../helpers/api";
+import { get, post, put } from "../helpers/api";
 import { List } from "../helpers/models";
-import { trashOutline } from "ionicons/icons";
+import { addOutline, listOutline, trashOutline } from "ionicons/icons";
+import { addIcons } from "ionicons";
+import { NewListModal } from "../components/NewListModal";
 
 const Home: React.FC = () => {
     const [lists, setLists] = useState<List[]>();
     const [editing, setEditing] = useState<boolean>(false);
+    const [selectedList, setSelectedList] = useState<number[]>();
+
+    const handleDismiss = () => {
+        dismissNewList();
+    };
 
     const getLists = useCallback(
         async function () {
@@ -36,9 +46,40 @@ const Home: React.FC = () => {
         },
         [setLists]
     );
+    const [newList, dismissNewList] = useIonModal(NewListModal, {
+        onDismiss: handleDismiss,
+        updateList: getLists,
+    });
 
     const toggleEditMode = () => {
         editing ? setEditing(false) : setEditing(true);
+    };
+
+    const selectList = (isChecked: boolean, listId: number) => {
+        if (isChecked) {
+            if (selectedList) {
+                if (!selectedList?.includes(listId)) {
+                    setSelectedList([...selectedList, listId]);
+                    return;
+                } else {
+                    return;
+                }
+            } else {
+                setSelectedList([listId]);
+                return;
+            }
+        } else {
+            if (selectedList) {
+                setSelectedList(selectedList.filter((id) => id !== listId));
+                return;
+            }
+        }
+    };
+
+    const deleteList = async () => {
+        await put("/list", { selectedList }, "application/json");
+        getLists();
+        toggleEditMode();
     };
 
     useEffect(() => {
@@ -58,34 +99,50 @@ const Home: React.FC = () => {
                 </IonToolbar>
             </IonHeader>
             <IonContent fullscreen>
-                {/* <IonRefresher slot="fixed" onIonRefresh={refresh}>
-                    <IonRefresherContent></IonRefresherContent>
-                </IonRefresher> */}
-
                 <IonList>
                     {lists?.map((list) => {
                         return (
-                            <>
-                                <IonItem
-                                    routerLink={"/tasks/" + list.id}
-                                    key={list.id}
-                                >
-                                    {editing ? (
-                                        <IonCheckbox slot="start"></IonCheckbox>
-                                    ) : null}
-                                    <IonLabel>{list.name}</IonLabel>
-                                </IonItem>
-                            </>
+                            <span key={list.id}>
+                                {editing ? (
+                                    <IonItem>
+                                        <IonCheckbox
+                                            slot="start"
+                                            onIonChange={(e) => {
+                                                selectList(
+                                                    e.detail.checked,
+                                                    list.id
+                                                );
+                                            }}
+                                        />
+                                        <IonLabel>{list.name}</IonLabel>
+                                    </IonItem>
+                                ) : (
+                                    <IonItem routerLink={"/tasks/" + list.id}>
+                                        <IonLabel>{list.name}</IonLabel>
+                                    </IonItem>
+                                )}
+                            </span>
                         );
                     })}
                 </IonList>
-                {editing ? (
-                    <IonFab horizontal="center" vertical="bottom">
-                        <IonFabButton color="danger">
+                <IonFab horizontal="center" vertical="bottom">
+                    {editing ? (
+                        <IonFabButton color="danger" onClick={deleteList}>
                             <IonIcon icon={trashOutline} />
                         </IonFabButton>
-                    </IonFab>
-                ) : null}
+                    ) : (
+                        <IonFabButton
+                            onClick={() => {
+                                newList({
+                                    cssClass: "my-class",
+                                });
+                            }}
+                            color="primary"
+                        >
+                            <IonIcon icon={addOutline} />
+                        </IonFabButton>
+                    )}
+                </IonFab>
             </IonContent>
         </IonPage>
     );

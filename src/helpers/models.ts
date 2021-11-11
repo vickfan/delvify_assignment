@@ -5,7 +5,8 @@ export type List = {
 
 export type Task = {
     id: number;
-    content: string;
+    name: string;
+    description: string;
     deadline?: Date;
     is_completed: boolean;
 };

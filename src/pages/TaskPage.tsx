@@ -18,18 +18,27 @@ import {
     IonPage,
     IonTitle,
     IonToolbar,
+    useIonModal,
     useIonViewWillEnter,
 } from "@ionic/react";
-import { personCircle, trashBinOutline, trashOutline } from "ionicons/icons";
+import {
+    addOutline,
+    arrowForwardOutline,
+    personCircle,
+    trashBinOutline,
+    trashOutline,
+} from "ionicons/icons";
 import { useParams } from "react-router";
-import { get } from "../helpers/api";
+import { get, put } from "../helpers/api";
 import { List, Task } from "../helpers/models";
 import styles from "./TaskPage.module.scss";
+import { NewTaskModal } from "../components/NewTaskModal";
 
 function TaskPage() {
     const [list, setList] = useState<List>();
     const [tasks, setTasks] = useState<Task[]>();
     const [editing, setEditing] = useState<boolean>(false);
+    const [selectedList, setSelectedList] = useState<number[]>();
     const { listId } = useParams<{ listId: string }>();
 
     const getInfo = useCallback(
@@ -42,8 +51,50 @@ function TaskPage() {
         [setList, setTasks]
     );
 
+    const selectList = (isChecked: boolean, taskId: number) => {
+        if (isChecked) {
+            if (selectedList) {
+                if (!selectedList?.includes(taskId)) {
+                    setSelectedList([...selectedList, taskId]);
+                    return;
+                } else {
+                    return;
+                }
+            } else {
+                setSelectedList([taskId]);
+                return;
+            }
+        } else {
+            if (selectedList) {
+                setSelectedList(selectedList.filter((id) => id !== taskId));
+                return;
+            }
+        }
+    };
+
+    const deleteTask = async () => {
+        await put("/task", { selectedList }, "application/json");
+        getInfo();
+        toggleEditMode();
+    };
+
+    const handleDismiss = () => {
+        dismissNewTask();
+    };
+
+    const [newTask, dismissNewTask] = useIonModal(NewTaskModal, {
+        onDismiss: handleDismiss,
+        updateTasks: getInfo,
+        listId,
+    });
+
     const toggleEditMode = () => {
         editing ? setEditing(false) : setEditing(true);
+    };
+
+    const completeTask = async (taskId: number) => {
+        await get(`/task/${taskId}`);
+        getInfo();
     };
 
     useEffect(() => {
@@ -72,9 +123,18 @@ function TaskPage() {
                 <IonList>
                     {tasks?.map((task) => {
                         return (
-                            <>
-                                <IonItem key={task.id}>
-                                    {editing ? <IonCheckbox /> : null}
+                            <span key={task.id}>
+                                <IonItem>
+                                    {editing ? (
+                                        <IonCheckbox
+                                            onIonChange={(e) => {
+                                                selectList(
+                                                    e.detail.checked,
+                                                    task.id
+                                                );
+                                            }}
+                                        />
+                                    ) : null}
                                     <IonLabel>
                                         <span
                                             className={
@@ -83,26 +143,51 @@ function TaskPage() {
                                                     : ""
                                             }
                                         >
-                                            {task.content}
+                                            {task.name}
                                         </span>
                                     </IonLabel>
-                                    {!task.is_completed ? (
-                                        <IonButton color="success" slot="end">
+                                    {!task.is_completed && !editing ? (
+                                        <IonButton
+                                            color="success"
+                                            slot="end"
+                                            onClick={() =>
+                                                completeTask(task.id)
+                                            }
+                                        >
                                             complete
                                         </IonButton>
                                     ) : null}
                                 </IonItem>
-                            </>
+                            </span>
                         );
                     })}
                 </IonList>
-                {editing ? (
-                    <IonFab horizontal="center" vertical="bottom">
-                        <IonFabButton color="danger">
-                            <IonIcon icon={trashOutline} />
+                <IonFab horizontal="center" vertical="bottom">
+                    {editing ? (
+                        <>
+                            <IonFabButton
+                                className="ion-margin-vertical"
+                                color="success"
+                            >
+                                <IonIcon icon={arrowForwardOutline} />
+                            </IonFabButton>
+                            <IonFabButton color="danger" onClick={deleteTask}>
+                                <IonIcon icon={trashOutline} />
+                            </IonFabButton>
+                        </>
+                    ) : (
+                        <IonFabButton
+                            color="primary"
+                            onClick={() => {
+                                newTask({
+                                    cssClass: "my-class",
+                                });
+                            }}
+                        >
+                            <IonIcon icon={addOutline} />
                         </IonFabButton>
-                    </IonFab>
-                ) : null}
+                    )}
+                </IonFab>
             </IonContent>
         </IonPage>
     );

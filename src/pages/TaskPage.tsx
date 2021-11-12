@@ -18,12 +18,15 @@ import {
     IonPage,
     IonTitle,
     IonToolbar,
+    useIonActionSheet,
     useIonModal,
     useIonViewWillEnter,
 } from "@ionic/react";
 import {
     addOutline,
     arrowForwardOutline,
+    informationCircleOutline,
+    informationOutline,
     personCircle,
     trashBinOutline,
     trashOutline,
@@ -33,12 +36,15 @@ import { get, put } from "../helpers/api";
 import { List, Task } from "../helpers/models";
 import styles from "./TaskPage.module.scss";
 import { NewTaskModal } from "../components/NewTaskModal";
+import { EditTask } from "../components/EditTaskModal";
+import { present } from "@ionic/core/dist/types/utils/overlays";
 
 function TaskPage() {
     const [list, setList] = useState<List>();
     const [tasks, setTasks] = useState<Task[]>();
     const [editing, setEditing] = useState<boolean>(false);
     const [selectedList, setSelectedList] = useState<number[]>();
+    const [activeTask, setActiveTask] = useState<Task>();
     const { listId } = useParams<{ listId: string }>();
 
     const getInfo = useCallback(
@@ -78,14 +84,25 @@ function TaskPage() {
         toggleEditMode();
     };
 
-    const handleDismiss = () => {
+    const dismissNewTaskModal = () => {
         dismissNewTask();
     };
 
     const [newTask, dismissNewTask] = useIonModal(NewTaskModal, {
-        onDismiss: handleDismiss,
+        onDismiss: dismissNewTaskModal,
         updateTasks: getInfo,
         listId,
+    });
+
+    const dismissEditTaskModal = () => {
+        dismissEditTask();
+    };
+
+    const [editTask, dismissEditTask] = useIonModal(EditTask, {
+        onDismiss: dismissEditTaskModal,
+        updateTasks: getInfo,
+        activeTask,
+        setActiveTask,
     });
 
     const toggleEditMode = () => {
@@ -95,6 +112,13 @@ function TaskPage() {
     const completeTask = async (taskId: number) => {
         await get(`/task/${taskId}`);
         getInfo();
+    };
+
+    const [moveTask, dismissMoveTask] = useIonActionSheet();
+
+    const moveSelectedTaskToList = async (listId: number) => {
+        let body = { selectedList, listId };
+        await put("/tasks/move", body, "application/json");
     };
 
     useEffect(() => {
@@ -135,7 +159,14 @@ function TaskPage() {
                                             }}
                                         />
                                     ) : null}
-                                    <IonLabel>
+                                    <IonLabel
+                                        onClick={() => {
+                                            setActiveTask(task);
+                                            editTask({
+                                                cssClass: "my-class",
+                                            });
+                                        }}
+                                    >
                                         <span
                                             className={
                                                 task.is_completed
@@ -146,7 +177,18 @@ function TaskPage() {
                                             {task.name}
                                         </span>
                                     </IonLabel>
-                                    {!task.is_completed && !editing ? (
+                                    {editing ? (
+                                        <IonIcon
+                                            onClick={() => {
+                                                // setActiveTask(task.id);
+                                                // editTask({
+                                                //     cssClass: "my-class",
+                                                // });
+                                                console.log("click");
+                                            }}
+                                            icon={informationCircleOutline}
+                                        />
+                                    ) : !task.is_completed ? (
                                         <IonButton
                                             color="success"
                                             slot="end"
@@ -169,7 +211,37 @@ function TaskPage() {
                                 className="ion-margin-vertical"
                                 color="success"
                             >
-                                <IonIcon icon={arrowForwardOutline} />
+                                <IonIcon
+                                    onClick={async () => {
+                                        let lists = await get("/lists");
+                                        moveTask({
+                                            buttons: [
+                                                ...lists.map(
+                                                    (list: {
+                                                        name: string;
+                                                        id: number;
+                                                    }) => {
+                                                        return {
+                                                            text: list.name,
+                                                            handler: () => {
+                                                                moveSelectedTaskToList(
+                                                                    list.id
+                                                                );
+                                                                getInfo();
+                                                            },
+                                                        };
+                                                    }
+                                                ),
+                                                {
+                                                    text: "Cancel",
+                                                    role: "cancel",
+                                                },
+                                            ],
+                                            header: "Move To",
+                                        });
+                                    }}
+                                    icon={arrowForwardOutline}
+                                />
                             </IonFabButton>
                             <IonFabButton color="danger" onClick={deleteTask}>
                                 <IonIcon icon={trashOutline} />

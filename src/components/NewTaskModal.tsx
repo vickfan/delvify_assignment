@@ -2,9 +2,11 @@ import {
     IonButton,
     IonButtons,
     IonCard,
+    IonDatetime,
     IonHeader,
     IonInput,
     IonItem,
+    IonLabel,
     IonTextarea,
 } from "@ionic/react";
 import { useState } from "react";
@@ -18,7 +20,7 @@ export const NewTaskModal: React.FC<{
 }> = ({ onDismiss, updateTasks, listId }) => {
     const [taskName, setTaskName] = useState<string | null>();
     const [taskDescription, setTaskDescription] = useState<string | null>();
-    const [deadline, setDeadline] = useState<Date>();
+    const [deadline, setDeadline] = useState<Date | null>();
 
     const saveNewTask = async () => {
         let body = {
@@ -50,19 +52,37 @@ export const NewTaskModal: React.FC<{
                 </IonButtons>
             </IonItem>
             <IonCard>
-                <IonInput
-                    placeholder="List Name"
-                    className="ion-text-center"
-                    value={taskName}
-                    onIonChange={(e) => setTaskName(e.detail.value)}
-                ></IonInput>
-                <IonTextarea
-                    placeholder="description"
-                    className="ion-padding ion-text-center"
-                    rows={4}
-                    value={taskDescription}
-                    onIonChange={(e) => setTaskDescription(e.detail.value)}
-                ></IonTextarea>
+                <IonItem>
+                    <IonLabel position="floating">List Name</IonLabel>
+                    <IonInput
+                        className="ion-text-center"
+                        value={taskName}
+                        onIonChange={(e) => setTaskName(e.detail.value)}
+                    ></IonInput>
+                </IonItem>
+                <IonItem>
+                    <IonLabel position="floating">Description</IonLabel>
+                    <IonTextarea
+                        className="ion-padding ion-text-center"
+                        rows={4}
+                        value={taskDescription}
+                        onIonChange={(e) => setTaskDescription(e.detail.value)}
+                    ></IonTextarea>
+                </IonItem>
+                <IonItem>
+                    <IonLabel>Deadline</IonLabel>
+                    <IonDatetime></IonDatetime>
+                    {/* <IonInput
+                        type="date"
+                        onIonChange={(e) => {
+                            // setDeadline(e.detail.value);
+                            console.log(e.detail.value);
+                            console.log(Date.parse(e.detail.value!));
+                            let date = Date.parse(e.detail.value!);
+                            console.log(date.toISOString());
+                        }}
+                    /> */}
+                </IonItem>
             </IonCard>
         </div>
     );

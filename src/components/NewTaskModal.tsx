@@ -8,6 +8,7 @@ import {
     IonItem,
     IonLabel,
     IonTextarea,
+    IonToggle,
 } from "@ionic/react";
 import { useState } from "react";
 import { useParams } from "react-router";
@@ -20,7 +21,8 @@ export const NewTaskModal: React.FC<{
 }> = ({ onDismiss, updateTasks, listId }) => {
     const [taskName, setTaskName] = useState<string | null>();
     const [taskDescription, setTaskDescription] = useState<string | null>();
-    const [deadline, setDeadline] = useState<Date | null>();
+    const [hasDeadline, setHasDeadline] = useState<boolean>(false);
+    const [deadline, setDeadline] = useState();
 
     const saveNewTask = async () => {
         let body = {
@@ -71,18 +73,23 @@ export const NewTaskModal: React.FC<{
                 </IonItem>
                 <IonItem>
                     <IonLabel>Deadline</IonLabel>
-                    <IonDatetime></IonDatetime>
-                    {/* <IonInput
-                        type="date"
-                        onIonChange={(e) => {
-                            // setDeadline(e.detail.value);
-                            console.log(e.detail.value);
-                            console.log(Date.parse(e.detail.value!));
-                            let date = Date.parse(e.detail.value!);
-                            console.log(date.toISOString());
-                        }}
-                    /> */}
+                    <IonToggle
+                        checked={hasDeadline}
+                        onIonChange={(e) => setHasDeadline(e.detail.checked)}
+                    ></IonToggle>
                 </IonItem>
+                {hasDeadline ? (
+                    <IonItem>
+                        <IonDatetime
+                            onIonChange={(e) => {
+                                console.log(
+                                    Date.parse(e.detail.value!).toString()
+                                );
+                                console.log(typeof Date.parse(e.detail.value!));
+                            }}
+                        ></IonDatetime>
+                    </IonItem>
+                ) : null}
             </IonCard>
         </div>
     );

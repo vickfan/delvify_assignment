@@ -121,6 +121,20 @@ function TaskPage() {
         await put("/tasks/move", body, "application/json");
     };
 
+    const expired = (deadline: string) => {
+        if (!deadline) {
+            return false;
+        }
+        let today = Date.now();
+        if (Date.parse(deadline) > today) {
+            //not expired
+            return false;
+        } else {
+            //expired
+            return true;
+        }
+    };
+
     useEffect(() => {
         getInfo();
     }, [getInfo]);
@@ -171,24 +185,16 @@ function TaskPage() {
                                             className={
                                                 task.is_completed
                                                     ? styles.completedTask
+                                                    : expired(task.deadline!)
+                                                    ? styles.expiredTask
                                                     : ""
                                             }
                                         >
+                                            {expired(task.deadline!)}
                                             {task.name}
                                         </span>
                                     </IonLabel>
-                                    {editing ? (
-                                        <IonIcon
-                                            onClick={() => {
-                                                // setActiveTask(task.id);
-                                                // editTask({
-                                                //     cssClass: "my-class",
-                                                // });
-                                                console.log("click");
-                                            }}
-                                            icon={informationCircleOutline}
-                                        />
-                                    ) : !task.is_completed ? (
+                                    {!editing && !task.is_completed ? (
                                         <IonButton
                                             color="success"
                                             slot="end"

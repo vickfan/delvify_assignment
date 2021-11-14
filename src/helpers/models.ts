@@ -7,6 +7,6 @@ export type Task = {
     id: number;
     name: string;
     description: string;
-    deadline?: Date;
+    deadline?: string | null;
     is_completed: boolean;
 };

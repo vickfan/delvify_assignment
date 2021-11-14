@@ -11,6 +11,8 @@ import {
     IonTitle,
     IonToggle,
 } from "@ionic/react";
+import { toggle } from "ionicons/icons";
+import { useEffect, useState } from "react";
 import { put } from "../helpers/api";
 import { Task } from "../helpers/models";
 
@@ -20,6 +22,22 @@ export const EditTask: React.FC<{
     activeTask: Task;
     setActiveTask: React.Dispatch<React.SetStateAction<Task | undefined>>;
 }> = ({ onDismiss, updateTasks, activeTask, setActiveTask }) => {
+    const [hasDeadline, setHasDeadline] = useState<boolean>(
+        !!activeTask?.deadline
+    );
+
+    const toggleDeadline = (toggle: boolean) => {
+        if (toggle) {
+            setHasDeadline(toggle);
+        } else {
+            setHasDeadline(toggle);
+            setActiveTask({
+                ...activeTask,
+                deadline: null,
+            });
+        }
+    };
+
     const saveTask = async () => {
         await put(`/task/${activeTask.id}`, activeTask, "application/json");
         updateTasks();
@@ -71,10 +89,31 @@ export const EditTask: React.FC<{
                 </IonItem>
                 <IonItem>
                     <IonLabel>Deadline</IonLabel>
-                    <IonDatetime></IonDatetime>
+                    <IonToggle
+                        checked={hasDeadline}
+                        onIonChange={(e) => toggleDeadline(e.detail.checked)}
+                    />
                 </IonItem>
+                {hasDeadline ? (
+                    <IonItem>
+                        <IonDatetime
+                            value={activeTask.deadline}
+                            displayFormat="YYYY-MM-DD"
+                            onIonChange={(e) => {
+                                setActiveTask({
+                                    ...activeTask,
+                                    deadline: e.detail.value!.slice(0, 10),
+                                });
+                            }}
+                        ></IonDatetime>
+                    </IonItem>
+                ) : null}
                 <IonItem>
-                    <IonLabel>Status</IonLabel>
+                    <IonLabel>
+                        {activeTask.is_completed
+                            ? "completed"
+                            : "not completed"}
+                    </IonLabel>
                     <IonToggle
                         checked={activeTask.is_completed}
                         onIonChange={(e) =>

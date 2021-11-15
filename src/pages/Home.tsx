@@ -1,29 +1,21 @@
-import MessageListItem from "../components/MessageListItem";
 import { useCallback, useEffect, useState } from "react";
-import { Message, getMessages } from "../data/messages";
 import {
     IonButton,
     IonButtons,
-    IonCard,
     IonCheckbox,
     IonContent,
     IonFab,
     IonFabButton,
     IonHeader,
     IonIcon,
-    IonInput,
     IonItem,
     IonLabel,
     IonList,
     IonPage,
-    IonRefresher,
-    IonRefresherContent,
     IonTitle,
     IonToolbar,
     useIonModal,
-    useIonViewWillEnter,
 } from "@ionic/react";
-import "./Home.css";
 import { get, post, put } from "../helpers/api";
 import { List } from "../helpers/models";
 import { addOutline, listOutline, trashOutline } from "ionicons/icons";

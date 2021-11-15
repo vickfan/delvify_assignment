@@ -63,7 +63,7 @@ export const EditTask: React.FC<{
             </IonItem>
             <IonCard>
                 <IonItem>
-                    <IonLabel position="floating">List Name</IonLabel>
+                    <IonLabel position="floating">Task Name</IonLabel>
                     <IonInput
                         value={activeTask.name}
                         onIonChange={(e) =>

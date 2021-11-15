@@ -55,7 +55,7 @@ export const NewTaskModal: React.FC<{
             </IonItem>
             <IonCard>
                 <IonItem>
-                    <IonLabel position="floating">List Name</IonLabel>
+                    <IonLabel position="floating">Task Name</IonLabel>
                     <IonInput
                         className="ion-text-center"
                         value={taskName}
